@@ -186,7 +186,5 @@ def main():
         run()
 
 
-DISPLAY_SURF, DISPLAY_RECT = make_display()
-
 if __name__ == "__main__":
     main()
