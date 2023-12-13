@@ -9,6 +9,9 @@ WINDOW_WIDTH = 700
 WINDOW_HEIGHT = 850
 TEXT_HEIGHT = 20
 
+RIGHT = 'right'
+LEFT = 'left'
+
 BUBBLE_RADIUS = 27
 BUBBLE_WIDTH = BUBBLE_RADIUS * 2
 BUBBLE_LAYERS = 5
@@ -30,6 +33,39 @@ BLACK = (0, 0, 0)
 BACKGROUND_COLOR = (233, 232, 255)
 
 COLOR_LIST = [RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, CYAN]
+
+
+class Arrow(pygame.sprite.Sprite):
+
+    def __init__(self):
+        pygame.sprite.Sprite.__init__(self)
+
+        self.angle = 90
+        arrow_image = pygame.image.load('arrow.png')
+        arrow_rect = arrow_image.get_rect()
+        new_width = int(arrow_rect.width / 2.5)
+        new_height = int(arrow_rect.height / 2.5)
+        self.image = pygame.transform.scale(arrow_image, (new_width, new_height))
+
+        self.transformImage = self.image
+        self.rect = arrow_rect
+        self.rect.centerx = START_X
+        self.rect.centery = START_Y
+
+    def update(self, direction):
+
+        if direction == LEFT and self.angle < 180:
+            self.angle += 1
+        elif direction == RIGHT and self.angle > 0:
+            self.angle -= 1
+
+        self.transformImage = pygame.transform.rotate(self.image, self.angle)
+        self.rect = self.transformImage.get_rect()
+        self.rect.centerx = START_X
+        self.rect.centery = START_Y
+
+    def draw(self):
+        DISPLAY_SURF.blit(self.transformImage, self.rect)
 
 
 class Bubble(pygame.sprite.Sprite):
@@ -114,20 +150,38 @@ def run():
     game_color_list = copy.deepcopy(COLOR_LIST)
     bubble_array = make_blank_board()
     set_bubbles(bubble_array, game_color_list)
+    arrow = Arrow()
+    clock = pygame.time.Clock()
+
     while True:
         DISPLAY_SURF.fill(BACKGROUND_COLOR)
         draw_bubble_array(bubble_array)
 
+        keys = pygame.key.get_pressed()
+        if keys[K_LEFT]:
+            direction = LEFT
+        elif keys[K_RIGHT]:
+            direction = RIGHT
+        else:
+            direction = None
+
+        arrow.update(direction)
+        arrow.draw()
+
         for event in pygame.event.get():
             if event.type == QUIT:
                 terminate()
+
         pygame.display.update()
+        clock.tick(120)
 
 
 def main():
+    global DISPLAY_SURF, DISPLAY_RECT
     pygame.init()
     pygame.display.set_caption('Bubble Buster')
     pygame.font.SysFont('Helvetica', TEXT_HEIGHT)
+    DISPLAY_SURF, DISPLAY_RECT = make_display()
     while True:
         run()
 
