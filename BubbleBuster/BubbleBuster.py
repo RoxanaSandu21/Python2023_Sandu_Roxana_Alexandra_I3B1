@@ -1,5 +1,6 @@
 import copy
 import random
+import math
 import pygame
 import sys
 import pygame.gfxdraw
@@ -69,22 +70,47 @@ class Arrow(pygame.sprite.Sprite):
 
 
 class Bubble(pygame.sprite.Sprite):
-
     def __init__(self, color, row=0, column=0):
         pygame.sprite.Sprite.__init__(self)
 
         self.rect = pygame.Rect(0, 0, 50, 50)
         self.rect.centerx = START_X
         self.rect.centery = START_Y
+        self.speed = 10
         self.color = color
         self.radius = BUBBLE_RADIUS
         self.angle = 0
         self.row = row
         self.column = column
 
+    def update(self):
+
+        if self.angle == 90:
+            x_move = 0
+            y_move = self.speed * -1
+        elif self.angle < 90:
+            x_move = self.x_calculate(self.angle)
+            y_move = self.y_calculate(self.angle)
+        elif self.angle > 90:
+            x_move = self.x_calculate(180 - self.angle) * -1
+            y_move = self.y_calculate(180 - self.angle)
+
+        self.rect.x += x_move
+        self.rect.y += y_move
+
     def draw(self):
         pygame.gfxdraw.filled_circle(DISPLAY_SURF, self.rect.centerx + 10, self.rect.centery, self.radius, self.color)
         pygame.gfxdraw.aacircle(DISPLAY_SURF, self.rect.centerx + 10, self.rect.centery, self.radius, BLACK)
+
+    def x_calculate(self, angle):
+        radians = math.radians(angle)
+        x_move = math.cos(radians) * (self.speed)
+        return x_move
+
+    def y_calculate(self, angle):
+        radians = math.radians(angle)
+        y_move = math.sin(radians) * (self.speed) * -1
+        return y_move
 
 
 def set_bubbles(array, game_color_list):
@@ -122,6 +148,48 @@ def set_array_pos(array):
                 array[row][column].rect.y -= (5 * row)
 
 
+def update_color_list(bubble_array):
+    new_color_list = []
+
+    for row in range(len(bubble_array)):
+        for column in range(len(bubble_array[0])):
+            if bubble_array[row][column] is not None:
+                new_color_list.append(bubble_array[row][column].color)
+
+    color_set = set(new_color_list)
+
+    if len(color_set) < 1:
+        color_list = []
+        color_list.append(WHITE)
+        return color_list
+
+    else:
+
+        return list(color_set)
+
+
+def stop_bubble(bubble_array, new_bubble, launch_bubble):
+    for row in range(len(bubble_array)):
+        for column in range(len(bubble_array[row])):
+            if bubble_array[row][column] is not None and new_bubble is not None:
+                if (pygame.sprite.collide_rect(new_bubble, bubble_array[row][column])) or new_bubble.rect.top < 0:
+                    if new_bubble.rect.centery >= bubble_array[row][column].rect.centery:
+                        if new_bubble.rect.centerx >= bubble_array[row][column].rect.centerx:
+                            if row == 0 or row % 2 == 0:
+                                new_row = row + 1
+                                new_column = column
+                                if new_row < len(bubble_array) and bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row - 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+
+                    launch_bubble = False
+                    new_bubble = None
+
+    return launch_bubble, new_bubble
+
+
 def make_blank_board():
     array = []
     for row in range(ARRAY_HEIGHT):
@@ -153,6 +221,15 @@ def run():
     arrow = Arrow()
     clock = pygame.time.Clock()
 
+    bubble_array = make_blank_board()
+    set_bubbles(bubble_array, game_color_list)
+    launch_bubble = False
+    new_bubble = None
+
+    next_bubble = Bubble(game_color_list[0])
+    next_bubble.rect.right = WINDOW_WIDTH - 5
+    next_bubble.rect.bottom = WINDOW_HEIGHT - 5
+
     while True:
         DISPLAY_SURF.fill(BACKGROUND_COLOR)
         draw_bubble_array(bubble_array)
@@ -172,8 +249,49 @@ def run():
             if event.type == QUIT:
                 terminate()
 
+            elif event.type == KEYUP:
+                direction = None
+                if event.key == K_SPACE:
+                    launch_bubble = True
+
+        if launch_bubble:
+            if new_bubble is None:
+                new_bubble = Bubble(next_bubble.color)
+                new_bubble.angle = arrow.angle
+
+            new_bubble.update()
+            new_bubble.draw()
+
+            if new_bubble.rect.right >= WINDOW_WIDTH - 5:
+                new_bubble.angle = 180 - new_bubble.angle
+            elif new_bubble.rect.left <= 5:
+                new_bubble.angle = 180 - new_bubble.angle
+
+            launch_bubble, new_bubble = stop_bubble(bubble_array, new_bubble, launch_bubble)
+
+            final_bubble_list = []
+            for row in range(len(bubble_array)):
+                for column in range(len(bubble_array[0])):
+                    if bubble_array[row][column] is not None:
+                        final_bubble_list.append(bubble_array[row][column])
+
+            game_color_list = update_color_list(bubble_array)
+            random.shuffle(game_color_list)
+
+            if not launch_bubble:
+                next_bubble = Bubble(game_color_list[0])
+                next_bubble.rect.right = WINDOW_WIDTH - 5
+                next_bubble.rect.bottom = WINDOW_HEIGHT - 5
+
+        next_bubble.draw()
+        arrow.update(direction)
+        arrow.draw()
+
+        set_array_pos(bubble_array)
+        draw_bubble_array(bubble_array)
+
         pygame.display.update()
-        clock.tick(120)
+        clock.tick(100)
 
 
 def main():
