@@ -168,12 +168,75 @@ def update_color_list(bubble_array):
         return list(color_set)
 
 
+def check_for_floaters(bubble_array):
+    bubble_list = [column for column in range(len(bubble_array[0])) if bubble_array[0][column] is not None]
+    new_bubble_list = []
+
+    for i in range(len(bubble_list)):
+        if i == 0:
+            new_bubble_list.append(bubble_list[i])
+        elif bubble_list[i] > bubble_list[i - 1] + 1:
+            new_bubble_list.append(bubble_list[i])
+
+    copy_of_board = copy.deepcopy(bubble_array)
+
+    for row in range(len(bubble_array)):
+        for column in range(len(bubble_array[0])):
+            bubble_array[row][column] = None
+
+    for column in new_bubble_list:
+        pop_floaters(bubble_array, copy_of_board, column)
+
+
+def pop_floaters(bubble_array, copy_of_board, column, row=0):
+    if (row < 0 or row > (len(bubble_array) - 1)
+            or column < 0 or column > (len(bubble_array[0]) - 1)):
+        return
+
+    elif copy_of_board[row][column] is None:
+        return
+
+    elif bubble_array[row][column] == copy_of_board[row][column]:
+        return
+
+    bubble_array[row][column] = copy_of_board[row][column]
+
+    if row == 0:
+        pop_floaters(bubble_array, copy_of_board, column + 1, row)
+        pop_floaters(bubble_array, copy_of_board, column - 1, row)
+        pop_floaters(bubble_array, copy_of_board, column, row + 1)
+        pop_floaters(bubble_array, copy_of_board, column - 1, row + 1)
+
+    elif row % 2 == 0:
+        pop_floaters(bubble_array, copy_of_board, column + 1, row)
+        pop_floaters(bubble_array, copy_of_board, column - 1, row)
+        pop_floaters(bubble_array, copy_of_board, column, row + 1)
+        pop_floaters(bubble_array, copy_of_board, column - 1, row + 1)
+        pop_floaters(bubble_array, copy_of_board, column, row - 1)
+        pop_floaters(bubble_array, copy_of_board, column - 1, row - 1)
+
+    else:
+        pop_floaters(bubble_array, copy_of_board, column + 1, row)
+        pop_floaters(bubble_array, copy_of_board, column - 1, row)
+        pop_floaters(bubble_array, copy_of_board, column, row + 1)
+        pop_floaters(bubble_array, copy_of_board, column + 1, row + 1)
+        pop_floaters(bubble_array, copy_of_board, column, row - 1)
+        pop_floaters(bubble_array, copy_of_board, column + 1, row - 1)
+
+
 def stop_bubble(bubble_array, new_bubble, launch_bubble):
+    delete_list = []
+
     for row in range(len(bubble_array)):
         for column in range(len(bubble_array[row])):
+
             if bubble_array[row][column] is not None and new_bubble is not None:
                 if (pygame.sprite.collide_rect(new_bubble, bubble_array[row][column])) or new_bubble.rect.top < 0:
-                    if new_bubble.rect.centery >= bubble_array[row][column].rect.centery:
+                    if new_bubble.rect.top < 0:
+                        new_row, new_column = add_bubble_to_top(bubble_array, new_bubble)
+
+                    elif new_bubble.rect.centery >= bubble_array[row][column].rect.centery:
+
                         if new_bubble.rect.centerx >= bubble_array[row][column].rect.centerx:
                             if row == 0 or row % 2 == 0:
                                 new_row = row + 1
@@ -184,10 +247,152 @@ def stop_bubble(bubble_array, new_bubble, launch_bubble):
                                 bubble_array[new_row][new_column].row = new_row
                                 bubble_array[new_row][new_column].column = new_column
 
+                            else:
+                                new_row = row + 1
+                                new_column = column + 1
+                                if new_row < len(bubble_array) and new_column < len(bubble_array[row]) and \
+                                        bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row - 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+
+                        elif new_bubble.rect.centerx < bubble_array[row][column].rect.centerx:
+                            if row == 0 or row % 2 == 0:
+                                new_row = row + 1
+                                new_column = column - 1
+                                if new_column >= 0 and bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row - 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+                            else:
+                                new_row = row + 1
+                                new_column = column
+                                if new_row < len(bubble_array) and bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row - 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+
+                    elif new_bubble.rect.centery < bubble_array[row][column].rect.centery:
+                        if new_bubble.rect.centerx >= bubble_array[row][column].rect.centerx:
+                            if row == 0 or row % 2 == 0:
+                                new_row = row - 1
+                                new_column = column
+                                if new_row >= 0 and bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row + 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+                            else:
+                                new_row = row - 1
+                                new_column = column + 1
+                                if new_row >= 0 and new_column < len(bubble_array[row]) and \
+                                        bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row + 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+
+                        elif new_bubble.rect.centerx <= bubble_array[row][column].rect.centerx:
+                            if row == 0 or row % 2 == 0:
+                                new_row = row - 1
+                                new_column = column - 1
+                                if new_row >= 0 and new_column >= 0 and bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row + 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+
+                            else:
+                                new_row = row - 1
+                                new_column = column
+                                if new_row >= 0 and bubble_array[new_row][new_column] is not None:
+                                    new_row = new_row + 1
+                                bubble_array[new_row][new_column] = copy.copy(new_bubble)
+                                bubble_array[new_row][new_column].row = new_row
+                                bubble_array[new_row][new_column].column = new_column
+
+                    pop_bubbles(bubble_array, new_row, new_column, new_bubble.color, delete_list)
+
+                    if len(delete_list) >= 3:
+                        for pos in delete_list:
+                            row = pos[0]
+                            column = pos[1]
+                            if 0 <= row < len(bubble_array) and 0 <= column < len(bubble_array[row]):
+                                bubble_array[row][column] = None
+                        check_for_floaters(bubble_array)
+
                     launch_bubble = False
                     new_bubble = None
 
     return launch_bubble, new_bubble
+
+
+def add_bubble_to_top(bubble_array, bubble):
+    pos_x = bubble.rect.centerx
+    left_side_x = pos_x - BUBBLE_RADIUS
+
+    column_division = math.modf(float(left_side_x) / float(BUBBLE_WIDTH))
+    column = int(column_division[1])
+
+    if column_division[0] < 0.5:
+        bubble_array[0][column] = copy.copy(bubble)
+    else:
+        column += 1
+        bubble_array[0][column] = copy.copy(bubble)
+
+    row = 0
+
+    return row, column
+
+
+def pop_bubbles(bubble_array, row, column, color, delete_list):
+    if row < 0 or column < 0 or row > (len(bubble_array) - 1) or column > (len(bubble_array[0]) - 1):
+        return
+
+    elif bubble_array[row][column] is None:
+        return
+
+    elif bubble_array[row][column].color != color:
+        return
+
+    for bubble in delete_list:
+        if bubble_array[bubble[0]][bubble[1]] == bubble_array[row][column]:
+            return
+
+    delete_list.append((row, column))
+
+    if row == 0:
+        pop_bubbles(bubble_array, row, column - 1, color, delete_list)
+        pop_bubbles(bubble_array, row, column + 1, color, delete_list)
+        pop_bubbles(bubble_array, row + 1, column, color, delete_list)
+        pop_bubbles(bubble_array, row + 1, column - 1, color, delete_list)
+
+    elif row % 2 == 0:
+
+        pop_bubbles(bubble_array, row + 1, column, color, delete_list)
+        pop_bubbles(bubble_array, row + 1, column - 1, color, delete_list)
+        pop_bubbles(bubble_array, row - 1, column, color, delete_list)
+        pop_bubbles(bubble_array, row - 1, column - 1, color, delete_list)
+        pop_bubbles(bubble_array, row, column + 1, color, delete_list)
+        pop_bubbles(bubble_array, row, column - 1, color, delete_list)
+
+    else:
+        pop_bubbles(bubble_array, row - 1, column, color, delete_list)
+        pop_bubbles(bubble_array, row - 1, column + 1, color, delete_list)
+        pop_bubbles(bubble_array, row + 1, column, color, delete_list)
+        pop_bubbles(bubble_array, row + 1, column + 1, color, delete_list)
+        pop_bubbles(bubble_array, row, column + 1, color, delete_list)
+        pop_bubbles(bubble_array, row, column - 1, color, delete_list)
+
+
+def cover_next_bubble():
+    white_rect = pygame.Rect(0, 0, BUBBLE_WIDTH, BUBBLE_WIDTH)
+    white_rect.bottom = WINDOW_HEIGHT
+    white_rect.right = WINDOW_WIDTH
+    pygame.draw.rect(DISPLAY_SURF, BACKGROUND_COLOR, white_rect)
 
 
 def make_blank_board():
@@ -284,6 +489,9 @@ def run():
                 next_bubble.rect.bottom = WINDOW_HEIGHT - 5
 
         next_bubble.draw()
+        if launch_bubble:
+            cover_next_bubble()
+
         arrow.update(direction)
         arrow.draw()
 
