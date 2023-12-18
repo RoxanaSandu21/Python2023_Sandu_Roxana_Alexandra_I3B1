@@ -43,7 +43,7 @@ class Score(object):
         self.render = self.font.render('Score: ' + str(self.total), True, BLACK, WHITE)
         self.rect = self.render.get_rect()
         self.rect.left = 5
-        self.rect.bottom = WINDOW_HEIGHT - 5
+        self.rect.bottom = WINDOW_HEIGHT - 30
 
     def update(self, deleteList):
         self.total += ((len(deleteList)) * 10)
@@ -455,7 +455,7 @@ def terminate():
     sys.exit()
 
 
-def run():
+def run(difficulty):
     game_color_list = copy.deepcopy(COLOR_LIST)
     bubble_array = make_blank_board()
     set_bubbles(bubble_array, game_color_list)
@@ -472,6 +472,10 @@ def run():
     next_bubble = Bubble(game_color_list[0])
     next_bubble.rect.right = WINDOW_WIDTH - 5
     next_bubble.rect.bottom = WINDOW_HEIGHT - 5
+
+    font = pygame.font.SysFont('comicsansms', 20)
+    difficulty_text = font.render(f'Difficulty: {difficulty.capitalize()}', True, BLACK, WHITE)
+    text_rect = difficulty_text.get_rect(left=5, top=WINDOW_HEIGHT - 29)
 
     while True:
         DISPLAY_SURF.fill(BACKGROUND_COLOR)
@@ -527,7 +531,8 @@ def run():
                 next_bubble.rect.right = WINDOW_WIDTH - 5
                 next_bubble.rect.bottom = WINDOW_HEIGHT - 5
 
-            move_counter, bubble_array = move_bubbles_down(move_counter, bubble_array, game_color_list)
+            if difficulty == 'hard':
+                move_counter, bubble_array = move_bubbles_down(move_counter, bubble_array, game_color_list)
 
         next_bubble.draw()
         if launch_bubble:
@@ -536,6 +541,7 @@ def run():
         arrow.update(direction)
         arrow.draw()
         score.draw()
+        DISPLAY_SURF.blit(difficulty_text, text_rect)
 
         set_array_pos(bubble_array)
         draw_bubble_array(bubble_array)
@@ -544,14 +550,54 @@ def run():
         clock.tick(100)
 
 
+def difficulty_selection():
+    pygame.init()
+
+    background_image = pygame.image.load('background.png')
+    background_image = pygame.transform.scale(background_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    DISPLAY_SURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                terminate()
+            elif event.type == MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                if easy_rect.collidepoint(mouse_pos):
+                    return 'easy'
+                elif hard_rect.collidepoint(mouse_pos):
+                    return 'hard'
+
+        DISPLAY_SURF.blit(background_image, (0, 0))
+
+        font = pygame.font.SysFont('comicsansms', 40)
+        text = font.render('Choose Difficulty:', True, BLACK)
+        text_rect = text.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 + 50))
+        DISPLAY_SURF.blit(text, text_rect)
+
+        button_font = pygame.font.SysFont('comicsansms', 30)
+        easy_button = button_font.render('Easy', True, BLACK)
+        easy_rect = easy_button.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 50))
+
+        hard_button = button_font.render('Hard', True, BLACK)
+        hard_rect = hard_button.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 1.5 + 50))
+
+        DISPLAY_SURF.blit(easy_button, easy_rect)
+        DISPLAY_SURF.blit(hard_button, hard_rect)
+
+        pygame.display.update()
+
+
 def main():
     global DISPLAY_SURF, DISPLAY_RECT
     pygame.init()
     pygame.display.set_caption('Bubble Buster')
     pygame.font.SysFont('Helvetica', TEXT_HEIGHT)
     DISPLAY_SURF, DISPLAY_RECT = make_display()
+    chosen_difficulty = difficulty_selection()
+
     while True:
-        run()
+        run(chosen_difficulty)
 
 
 if __name__ == "__main__":
