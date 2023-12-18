@@ -521,6 +521,13 @@ def run(difficulty):
                 for column in range(len(bubble_array[0])):
                     if bubble_array[row][column] is not None:
                         final_bubble_list.append(bubble_array[row][column])
+                        if bubble_array[row][column].rect.bottom > (WINDOW_HEIGHT - arrow.rect.height - 10):
+                            end('lose', score.total)
+                            return
+
+            if len(final_bubble_list) == 0:
+                end('win', score.total)
+                return
 
             game_color_list = update_color_list(bubble_array)
             random.shuffle(game_color_list)
@@ -558,16 +565,6 @@ def difficulty_selection():
     DISPLAY_SURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
     while True:
-        for event in pygame.event.get():
-            if event.type == QUIT:
-                terminate()
-            elif event.type == MOUSEBUTTONDOWN:
-                mouse_pos = pygame.mouse.get_pos()
-                if easy_rect.collidepoint(mouse_pos):
-                    return 'easy'
-                elif hard_rect.collidepoint(mouse_pos):
-                    return 'hard'
-
         DISPLAY_SURF.blit(background_image, (0, 0))
 
         font = pygame.font.SysFont('comicsansms', 40)
@@ -586,6 +583,56 @@ def difficulty_selection():
         DISPLAY_SURF.blit(hard_button, hard_rect)
 
         pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                terminate()
+            elif event.type == MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                if easy_rect.collidepoint(mouse_pos):
+                    return 'easy'
+                elif hard_rect.collidepoint(mouse_pos):
+                    return 'hard'
+
+
+def end(status, score):
+    pygame.init()
+
+    background_image = pygame.image.load('background.png')
+    background_image = pygame.transform.scale(background_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
+    DISPLAY_SURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+
+    while True:
+        DISPLAY_SURF.blit(background_image, (0, 0))
+
+        font = pygame.font.SysFont('comicsansms', 40)
+        if status == 'lose':
+            text1 = font.render(f'You lost :(. Score: {score}.', True, BLACK)
+        else:
+            text1 = font.render(f'You won!!! Score: {score}.', True, BLACK)
+        text1_rect = text1.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 3 + 90))
+        DISPLAY_SURF.blit(text1, text1_rect)
+
+        text2 = font.render('Do you want to play again?', True, BLACK)
+        text2_rect = text2.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2))
+        DISPLAY_SURF.blit(text2, text2_rect)
+
+        button_font = pygame.font.SysFont('comicsansms', 30)
+        play_again = button_font.render('PLAY', True, BLACK)
+        play_rect = play_again.get_rect(center=(WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2 + 100))
+
+        DISPLAY_SURF.blit(play_again, play_rect)
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                terminate()
+            elif event.type == MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
+                if play_rect.collidepoint(mouse_pos):
+                    main()
+                    return
 
 
 def main():
