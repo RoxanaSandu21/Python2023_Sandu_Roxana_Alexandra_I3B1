@@ -413,6 +413,24 @@ def cover_next_bubble():
     pygame.draw.rect(DISPLAY_SURF, BACKGROUND_COLOR, white_rect)
 
 
+def move_bubbles_down(move_counter, bubble_array, game_color_list):
+    if move_counter >= 5:
+        for row in range(len(bubble_array) - 1, 0, -1):
+            for column in range(len(bubble_array[row])):
+                bubble_array[row][column] = bubble_array[row - 2][column]
+
+        for column in range(len(bubble_array[0])):
+            random.shuffle(game_color_list)
+            bubble_array[0][column] = Bubble(game_color_list[0])
+        for column in range(len(bubble_array[1])):
+            random.shuffle(game_color_list)
+            bubble_array[1][column] = Bubble(game_color_list[1])
+
+        move_counter = 0
+
+    return move_counter, bubble_array
+
+
 def make_blank_board():
     array = []
     for row in range(ARRAY_HEIGHT):
@@ -444,6 +462,7 @@ def run():
     arrow = Arrow()
     score = Score()
     clock = pygame.time.Clock()
+    move_counter = 0
 
     bubble_array = make_blank_board()
     set_bubbles(bubble_array, game_color_list)
@@ -503,9 +522,12 @@ def run():
             random.shuffle(game_color_list)
 
             if not launch_bubble:
+                move_counter += 1
                 next_bubble = Bubble(game_color_list[0])
                 next_bubble.rect.right = WINDOW_WIDTH - 5
                 next_bubble.rect.bottom = WINDOW_HEIGHT - 5
+
+            move_counter, bubble_array = move_bubbles_down(move_counter, bubble_array, game_color_list)
 
         next_bubble.draw()
         if launch_bubble:
