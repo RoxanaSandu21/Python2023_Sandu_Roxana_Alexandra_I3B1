@@ -36,6 +36,23 @@ BACKGROUND_COLOR = (233, 232, 255)
 COLOR_LIST = [RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, CYAN]
 
 
+class Score(object):
+    def __init__(self):
+        self.total = 0
+        self.font = pygame.font.SysFont('comicsansms', 20)
+        self.render = self.font.render('Score: ' + str(self.total), True, BLACK, WHITE)
+        self.rect = self.render.get_rect()
+        self.rect.left = 5
+        self.rect.bottom = WINDOW_HEIGHT - 5
+
+    def update(self, deleteList):
+        self.total += ((len(deleteList)) * 10)
+        self.render = self.font.render('Score: ' + str(self.total), True, BLACK, WHITE)
+
+    def draw(self):
+        DISPLAY_SURF.blit(self.render, self.rect)
+
+
 class Arrow(pygame.sprite.Sprite):
 
     def __init__(self):
@@ -224,7 +241,7 @@ def pop_floaters(bubble_array, copy_of_board, column, row=0):
         pop_floaters(bubble_array, copy_of_board, column + 1, row - 1)
 
 
-def stop_bubble(bubble_array, new_bubble, launch_bubble):
+def stop_bubble(bubble_array, new_bubble, launch_bubble, score):
     delete_list = []
 
     for row in range(len(bubble_array)):
@@ -323,11 +340,12 @@ def stop_bubble(bubble_array, new_bubble, launch_bubble):
                             if 0 <= row < len(bubble_array) and 0 <= column < len(bubble_array[row]):
                                 bubble_array[row][column] = None
                         check_for_floaters(bubble_array)
+                        score.update(delete_list)
 
                     launch_bubble = False
                     new_bubble = None
 
-    return launch_bubble, new_bubble
+    return launch_bubble, new_bubble, score
 
 
 def add_bubble_to_top(bubble_array, bubble):
@@ -424,6 +442,7 @@ def run():
     bubble_array = make_blank_board()
     set_bubbles(bubble_array, game_color_list)
     arrow = Arrow()
+    score = Score()
     clock = pygame.time.Clock()
 
     bubble_array = make_blank_board()
@@ -472,7 +491,7 @@ def run():
             elif new_bubble.rect.left <= 5:
                 new_bubble.angle = 180 - new_bubble.angle
 
-            launch_bubble, new_bubble = stop_bubble(bubble_array, new_bubble, launch_bubble)
+            launch_bubble, new_bubble, score = stop_bubble(bubble_array, new_bubble, launch_bubble, score)
 
             final_bubble_list = []
             for row in range(len(bubble_array)):
@@ -494,6 +513,7 @@ def run():
 
         arrow.update(direction)
         arrow.draw()
+        score.draw()
 
         set_array_pos(bubble_array)
         draw_bubble_array(bubble_array)
