@@ -241,7 +241,7 @@ def pop_floaters(bubble_array, copy_of_board, column, row=0):
         pop_floaters(bubble_array, copy_of_board, column + 1, row - 1)
 
 
-def stop_bubble(bubble_array, new_bubble, launch_bubble, score):
+def stop_bubble(bubble_array, new_bubble, launch_bubble, score, pop_sound):
     delete_list = []
 
     for row in range(len(bubble_array)):
@@ -334,6 +334,7 @@ def stop_bubble(bubble_array, new_bubble, launch_bubble, score):
                     pop_bubbles(bubble_array, new_row, new_column, new_bubble.color, delete_list)
 
                     if len(delete_list) >= 3:
+                        pop_sound.play()
                         for pos in delete_list:
                             row = pos[0]
                             column = pos[1]
@@ -477,6 +478,13 @@ def run(difficulty):
     difficulty_text = font.render(f'Difficulty: {difficulty.capitalize()}', True, BLACK, WHITE)
     text_rect = difficulty_text.get_rect(left=5, top=WINDOW_HEIGHT - 29)
 
+    pygame.mixer.init()
+    pygame.mixer.music.load('background.mp3')
+    pygame.mixer.music.play(-1)
+
+    launch_sound = pygame.mixer.Sound('launch.mp3')
+    pop_sound = pygame.mixer.Sound('pop.wav')
+
     while True:
         DISPLAY_SURF.fill(BACKGROUND_COLOR)
         draw_bubble_array(bubble_array)
@@ -500,6 +508,7 @@ def run(difficulty):
                 direction = None
                 if event.key == K_SPACE:
                     launch_bubble = True
+                    launch_sound.play()
 
         if launch_bubble:
             if new_bubble is None:
@@ -514,7 +523,7 @@ def run(difficulty):
             elif new_bubble.rect.left <= 5:
                 new_bubble.angle = 180 - new_bubble.angle
 
-            launch_bubble, new_bubble, score = stop_bubble(bubble_array, new_bubble, launch_bubble, score)
+            launch_bubble, new_bubble, score = stop_bubble(bubble_array, new_bubble, launch_bubble, score, pop_sound)
 
             final_bubble_list = []
             for row in range(len(bubble_array)):
@@ -564,6 +573,10 @@ def difficulty_selection():
     background_image = pygame.transform.scale(background_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
     DISPLAY_SURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
+    pygame.mixer.init()
+    pygame.mixer.music.load('start.mp3')
+    pygame.mixer.music.play(-1)
+
     while True:
         DISPLAY_SURF.blit(background_image, (0, 0))
 
@@ -602,6 +615,10 @@ def end(status, score):
     background_image = pygame.transform.scale(background_image, (WINDOW_WIDTH, WINDOW_HEIGHT))
     DISPLAY_SURF = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
+    pygame.mixer.init()
+    pygame.mixer.music.load('start.mp3')
+    pygame.mixer.music.play(-1)
+
     while True:
         DISPLAY_SURF.blit(background_image, (0, 0))
 
@@ -631,6 +648,7 @@ def end(status, score):
             elif event.type == MOUSEBUTTONDOWN:
                 mouse_pos = pygame.mouse.get_pos()
                 if play_rect.collidepoint(mouse_pos):
+                    pygame.mixer.music.stop()
                     main()
                     return
 
@@ -642,6 +660,7 @@ def main():
     pygame.font.SysFont('Helvetica', TEXT_HEIGHT)
     DISPLAY_SURF, DISPLAY_RECT = make_display()
     chosen_difficulty = difficulty_selection()
+    pygame.mixer.music.stop()
 
     while True:
         run(chosen_difficulty)
