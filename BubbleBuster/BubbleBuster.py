@@ -45,8 +45,8 @@ class Score(object):
         self.rect.left = 5
         self.rect.bottom = WINDOW_HEIGHT - 30
 
-    def update(self, deleteList):
-        self.total += ((len(deleteList)) * 10)
+    def update(self, delete_list):
+        self.total += ((len(delete_list)) * 10)
         self.render = self.font.render('Score: ' + str(self.total), True, BLACK, WHITE)
 
     def draw(self):
@@ -108,7 +108,7 @@ class Bubble(pygame.sprite.Sprite):
         elif self.angle < 90:
             x_move = self.x_calculate(self.angle)
             y_move = self.y_calculate(self.angle)
-        elif self.angle > 90:
+        else:
             x_move = self.x_calculate(180 - self.angle) * -1
             y_move = self.y_calculate(180 - self.angle)
 
@@ -121,12 +121,12 @@ class Bubble(pygame.sprite.Sprite):
 
     def x_calculate(self, angle):
         radians = math.radians(angle)
-        x_move = math.cos(radians) * (self.speed)
+        x_move = math.cos(radians) * self.speed
         return x_move
 
     def y_calculate(self, angle):
         radians = math.radians(angle)
-        y_move = math.sin(radians) * (self.speed) * -1
+        y_move = math.sin(radians) * self.speed * -1
         return y_move
 
 
@@ -176,8 +176,7 @@ def update_color_list(bubble_array):
     color_set = set(new_color_list)
 
     if len(color_set) < 1:
-        color_list = []
-        color_list.append(WHITE)
+        color_list = [WHITE]
         return color_list
 
     else:
@@ -243,6 +242,8 @@ def pop_floaters(bubble_array, copy_of_board, column, row=0):
 
 def stop_bubble(bubble_array, new_bubble, launch_bubble, score, pop_sound):
     delete_list = []
+    new_row = 0
+    new_column = 0
 
     for row in range(len(bubble_array)):
         for column in range(len(bubble_array[row])):
